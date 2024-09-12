@@ -1,11 +1,13 @@
 package swagger.swagger.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import swagger.swagger.model.Customers;
 import swagger.swagger.repository.RepositoryCustomer;
 
 import java.util.List;
 @RequiredArgsConstructor
+@Service
 public class ServiceCustomerImp implements ServiceCustomer {
     final RepositoryCustomer repositoryCustomer;//repositorio para acceder slos datos de los clientes
 
