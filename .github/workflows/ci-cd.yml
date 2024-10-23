@@ -14,10 +14,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3  # Actualizado a la versión 3
 
       - name: Set up JDK
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3  # Actualizado a la versión 3
         with:
           java-version: '21'  # Cambia la versión según tu proyecto.
           distribution: 'adopt'
@@ -35,7 +35,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3  # Actualizado a la versión 3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
