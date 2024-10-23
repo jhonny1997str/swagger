@@ -15,7 +15,7 @@ import java.util.List;
 @Service
 public class Controller {
     private final ServiceCustomer serviceCustomer;
-    //metodos para solicitudes http
+    //metodos para solicitudes http asi
     @GetMapping
     public List<Customers> findAll(){
         return serviceCustomer.findAll();
