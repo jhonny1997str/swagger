@@ -1,8 +1,11 @@
 package swagger.swagger;
-//importo anoaciones JUnito para lacreacion de pruebas
-import org.junit.jupiter.api.*;
-//importo anotaciones mochito que permite la cracion de objetos simulados
-import org.mockito.*;
+
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import swagger.swagger.model.Customers;
 import swagger.swagger.repository.RepositoryCustomer;
 import swagger.swagger.service.ServiceCustomerImp;
@@ -10,36 +13,121 @@ import swagger.swagger.service.ServiceCustomerImp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-//importo afirmaciones de JUnit que se utilizan para verificar resultados assertions
-import static  org.junit.jupiter.api.Assertions.*;
-//importo los metodos d mockito para simular comportamientos de metodos
+
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class ServiceCustomerImpTest {
-    //variable para almacenar la instancia de customer que se usara en las pruebas
+    //creo variable que almacene customers
     private Customers customers;
-    //mock indica que este es un objeto simulado
+    //indico el mock simulado es el repo porque realiza ooperaciones con customers
     @Mock
-    //simulacion del repositorio que maneja las operaciones de clientes
     private RepositoryCustomer repositoryCustomer;
-
-    //indica que se inyecta el mock en este objeto
+    //inyecto el objeto simulado en el servicio que es el que realiza las pruebas
     @InjectMocks
-    //servicio que se esta probando ,que utiliza el repositorio
     private ServiceCustomerImp serviceCustomerImp;
-
-    //ESTE METODO se ejecuta antes de cada prueba para preparar el entorno
+    //uso before antes de cada prueba y preparo el entorno
     @BeforeEach
-    void setup(){
-        //inicializa el mock que se han declarado con la anotacion mock
+    void setuo(){
+        //inicializo el mock que fue declarado con la anotacion
         MockitoAnnotations.openMocks(this);
-        //creo una instancia de Customers que se utilizara en las pruebas
+        //creo instancia de customers y establezco valores
         customers = new Customers();
-        //establezco el valor para el cliente simulado
         customers.setCustomer_id(1L);
         customers.setCustomer_name("Jhonny");
+    }
+    //prueba de metodos
+    //getAll
+    @Test
+    void getAll() {
+        //creo lista para almacenar customer y lo añado ala lista
+        List<Customers> lista = new ArrayList<>();
+        lista.add(customers);
+        //comportamiento del mock
+        when(repositoryCustomer.findAll()).thenReturn(lista);
+        //llamo al metodo del servicio
+        List<Customers> temp = serviceCustomerImp.findAll();
+        assertEquals(1, temp.size());
+    }
+    //getbyid
+    @Test
+    void getById(){
+        //COMPORTAMIENTO DEL MOCK
+        when(repositoryCustomer.findById(1L)).thenReturn(Optional.of(customers));
+        //llamo al servicio
+        Customers result = serviceCustomerImp.findById(1L);
+        assertNotNull(result);
+        assertEquals("Jhonny", result.getCustomer_name());
+        verify(repositoryCustomer, times(1)).findById(1L);
+    }
+    //metodo save
+    @Test
+    void save(){
+        Customers Csaved = new Customers();
+        Csaved.setCustomer_id(1L);
+        Csaved.setCustomer_name("Jhonny");
+        //comportamiento del mock
+        when(repositoryCustomer.save(customers)).thenReturn(customers);
+        //llamo al servicio
+        Customers  saved = serviceCustomerImp.save(customers);
+        //verificacion
+        assertEquals("Jhonny", saved.getCustomer_name());
+        assertNotNull(saved);
+        verify(repositoryCustomer, times(1)).save(Csaved);
+    }
+    //metodo update
+    @Test
+    void update (){
+        Customers Ctoupdate = new Customers();
+        Ctoupdate.setCustomer_name("Jhonny Actualizado");
+        //comportamientos del mock findbyid y save del repo
+        when(repositoryCustomer.findById(1L)).thenReturn(Optional.of(customers));
+        when(repositoryCustomer.save(customers)).thenReturn(customers);
+        //llamo el metodo del servicio y lo guardo
+        Customers updated = serviceCustomerImp.update(1L, Ctoupdate);
+        assertNotNull(updated);
+        assertEquals("Jhonny Actualizado", updated.getCustomer_name());
+        verify(repositoryCustomer, times(1)).findById(1L);
+        verify(repositoryCustomer, times(1)).save(customers);
+
 
     }
+    //delete
+    @Test
+    void delete(){
+        //variable que almacena id a eliminar
+        Long idTodelete = 1L;
+        when(repositoryCustomer.existsById(idTodelete)).thenReturn(true);
+        //lamo directamente del servicio
+        serviceCustomerImp.delete(idTodelete);
+        //verifico que el metodo del repo es llamado unavez
+        verify(repositoryCustomer, times(1)).deleteById(idTodelete);
+    }
+
+    //delete cliente not found
+    @Test
+    void delete_not_found() {
+        //creo variable para el id a eliminir
+        Long idTodelete = 1L;
+        //comportamiento del mock cuando llamo al repo devolvera false
+        when(repositoryCustomer.existsById(1L)).thenReturn(false);
+        //llamo al metodo del servicio y lanzo una excepcion
+        RuntimeException exception = assertThrows(RuntimeException.class, ()-> {
+            serviceCustomerImp.delete(idTodelete);
+        });
+        //verifico el mensaje de la excepcion
+        assertEquals("Customer not found", exception.getMessage());
+        //verifico que el metodo no fue llamado
+        verify(repositoryCustomer, never()).deleteById(idTodelete);
+    }
+}
+
+
+
+
+
+
+/*
     //prueba para metodo getall del servicio
     @Test
     void findAll(){
@@ -69,7 +157,26 @@ public class ServiceCustomerImpTest {
         //verifica que el metodo findbyid del repo fue llamado una ve<
         verify(repositoryCustomer, times(1)).findById(1L);
     }
+    //metodo save
+    @Test
+    void save(){
+        //creo instancia de clientes que se va guardar
+        Customers save = new Customers();
+        save.setCustomer_id(1L);
+        save.setCustomer_name("Jhonny");
+        //comportamiento cuando llamo el metodo del repo devuelve el cliente que se guarda
+        when(repositoryCustomer.save(save)).thenReturn(save);
+        //llamo el metodo del servicio y y lo guardo
+        Customers saved = serviceCustomerImp.save(save);
+        //verifico que no sea nulo que el nombre sea igual y sea llamado una vez
+        assertNotNull(saved);
+        assertEquals("Jhonny", saved.getCustomer_name());
+        verify(repositoryCustomer, times(1)).save(save);
+    }
+
 }
+
+     */
 
 /*
 En resumen, los métodos de Mockito que utilizas en tu prueba son:
@@ -94,3 +201,5 @@ assertNotNull(): Para asegurarse de que un objeto no sea nulo.
 Estos elementos son esenciales para estructurar y ejecutar pruebas unitarias efectivas
  en Java utilizando JUnit.
 * */
+
+

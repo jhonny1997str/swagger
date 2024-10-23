@@ -1,0 +1,30 @@
+
+version: '3.9'  # Especifica la versión de Docker Compose que se está utilizando.
+
+services:  # Define los servicios (contenedores) que se van a utilizar en la aplicación.
+  postgres:  # Nombre del primer servicio, en este caso, una base de datos PostgreSQL.
+    image: postgres:15  # Indica la imagen de Docker que se usará, aquí es la versión 15 de PostgreSQL.
+    environment:  # Aquí se definen las variables de entorno para el contenedor de PostgreSQL.
+      POSTGRES_DB: ${DB_NAME}  # Nombre de la base de datos, se toma de una variable de entorno.
+      POSTGRES_USER: ${DB_USERNAME}  # Nombre de usuario para acceder a la base de datos.
+      POSTGRES_PASSWORD: ${DB_PASSWORD}  # Contraseña para acceder a la base de datos.
+    volumes:  # Define un volumen persistente para los datos de PostgreSQL.
+      - postgres_data:/var/lib/postgresql/data  # Mapea el volumen `postgres_data` al directorio de datos de PostgreSQL.
+    ports:  # Configura el mapeo de puertos.
+      - "5432:5432"  # Expone el puerto 5432 del contenedor en el puerto 5432 del host.
+
+  app:  # Nombre del segundo servicio, que es la aplicación.
+    build: .  # Indica que se debe construir la imagen de Docker a partir del Dockerfile en el directorio actual.
+    environment:  # Define las variables de entorno para la aplicación.
+      DB_HOST: postgres  # Especifica el nombre del contenedor de la base de datos como el host.
+      DB_PORT: 5432  # Especifica el puerto de conexión a la base de datos.
+      DB_NAME: ${DB_NAME}  # Nombre de la base de datos, de una variable de entorno.
+      DB_USERNAME: ${DB_USERNAME}  # Nombre de usuario, de una variable de entorno.
+      DB_PASSWORD: ${DB_PASSWORD}  # Contraseña, de una variable de entorno.
+    ports:  # Configura el mapeo de puertos para la aplicación.
+      - "8080:8080"  # Expone el puerto 8080 del contenedor en el puerto 8080 del host.
+    depends_on:  # Especifica las dependencias de este servicio.
+      - postgres  # La aplicación depende del servicio de PostgreSQL, lo que garantiza que se inicie primero.
+
+volumes:  # Define volúmenes que se utilizarán en los servicios.
+  postgres_data:  # Nombre del volumen persistente donde se almacenarán los datos de PostgreSQL.

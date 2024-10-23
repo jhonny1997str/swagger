@@ -1,0 +1,59 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main  # Cambia 'main' si tu rama principal tiene otro nombre, como 'master'.
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '21'  # Cambia la versión según tu proyecto.
+          distribution: 'adopt'
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+
+      - name: Run tests
+        run: mvn test
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'  # Solo despliega en la rama principal.
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}  # Usa el secreto DOCKER_USERNAME.
+          password: ${{ secrets.DOCKER_PASSWORD }}  # Usa el secreto DOCKER_PASSWORD.
+
+      - name: Build Docker image
+        run: |
+          docker build -t jhonnystr/swagger:latest .  # Reemplaza con tu nombre de usuario de Docker Hub.
+
+      - name: Push Docker image
+        run: |
+          docker push jhonnystr/swagger:latest  # Reemplaza con tu nombre de usuario de Docker Hub.
+
+      - name: Deploy to Server
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.REMOTE_USER }}@${{ secrets.REMOTE_HOST }} "docker pull jhonnystr/swagger:latest && docker stop swagger-container || true && docker rm swagger-container || true && docker run -d --name swagger-container -p 8080:8080 jhonnystr/swagger:latest"  # Asegúrate de que el contenedor esté configurado correctamente.
